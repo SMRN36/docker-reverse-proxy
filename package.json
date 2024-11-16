@@ -11,10 +11,13 @@
   "license": "ISC",
   "devDependencies": {
     "@types/express": "^5.0.0",
+    "@types/http-proxy": "^1.17.15",
     "@types/node": "^22.9.0"
   },
   "dependencies": {
+    "@types/dockerode": "^3.3.31",
     "dockerode": "^4.0.2",
-    "express": "^4.21.1"
+    "express": "^4.21.1",
+    "http-proxy": "^1.18.1"
   }
 }
