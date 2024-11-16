@@ -15,6 +15,7 @@ docker.getEvents(function (err, stream) {
     }
 
     stream.on("data", async (chunk) => {
+    try{
         if(!chunk) return;
         const event = JSON.parse(chunk.toString());
 
@@ -39,6 +40,8 @@ docker.getEvents(function (err, stream) {
             );
             db.set(containerName, { containerName, ipAddress, defaultPort });
         }
+    } catch (err) {}
+        
     });
 });
 
@@ -57,11 +60,28 @@ reverseProxyApp.use(function(req, res){
 
     console.log(`Forwarding ${hostname} --> ${target}`);
 
-    return proxy.web(req, res, { target, changeOrigin  :true });
+    return proxy.web(req, res, { target, changeOrigin  :true, ws: true });
 });
 
 const reverseProxy = http.createServer(reverseProxyApp);
 
+reverseProxy.on('upgrade', (req, socket, head) => {
+    const hostname = req.hostname;
+    const subdomain = hostname.split('.')[0];
+    
+    if(!db.has(subdomain)) return res.status(404).end(404);
+
+    const { ipAddress, defaultPort } = db.get(subdomain);
+
+    const target = `http://${ipAddress}:${defaultPort}`;
+
+    console.log(`Forwarding ${hostname} --> ${target}`);
+
+    return proxy.ws(req, socket, head, {
+        target: proxyRequest,
+        ws: true,
+    });
+})
 
 const managementAPI = express();
 
